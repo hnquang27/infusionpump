@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bơm tiêm tự động</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #e2e8f0;
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .dose-low { color: #10b981; }
+        .dose-med { color: #f59e0b; }
+        .dose-high { color: #ef4444; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen text-gray-800">
+
+    <div class="max-w-5xl mx-auto p-4 md:p-8">
+        <header class="mb-8 flex items-center gap-3">
+            <div class="p-3 bg-blue-600 rounded-lg text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.673.337a4 4 0 01-2.506.326l-2.414-.483a2 2 0 00-1.022.547l-2.121 2.121a2 2 0 00-.586 1.414V21a1 1 0 001 1h16a1 1 0 001-1v-1.414a2 2 0 00-.586-1.414l-2.121-2.121z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10V5a2 2 0 00-2-2H9a2 2 0 00-2 2v5" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 13V10" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold">Bơm tiêm tự động</h1>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-3 space-y-2">
+                <h3 class="font-bold text-gray-400 text-xs uppercase tracking-widest mb-3">Danh sách thuốc</h3>
+                <div id="drugMenu" class="flex lg:flex-col overflow-x-auto gap-2 pb-2 lg:pb-0">
+                    </div>
+            </div>
+
+            <div class="lg:col-span-9 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                <div id="welcomeScreen" class="p-12 text-center flex flex-col items-center justify-center min-h-[400px]">
+                    <div class="text-6xl mb-4">🏥</div>
+                    <p class="text-gray-400">Vui lòng chọn thuốc để bắt đầu cấu hình liều truyền.</p>
+                </div>
+
+                <div id="calcScreen" class="hidden">
+                    <div class="bg-blue-600 p-6 text-white flex justify-between items-center">
+                        <div>
+                            <h2 id="drugName" class="text-2xl font-bold">--</h2>
+                            <p id="drugSub" class="opacity-90 text-sm mt-1">--</p>
+                        </div>
+                    </div>
+
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="space-y-6">
+                            <section>
+                                <label class="block text-sm font-bold text-gray-600 mb-2">Hàm lượng thuốc (mg)</label>
+                                <div id="mgSuggestions" class="flex flex-wrap gap-2 mb-3"></div>
+                                <input type="number" id="mgInput" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-semibold">
+                            </section>
+
+                            <section>
+                                <label class="block text-sm font-bold text-gray-600 mb-2">Thể tích pha (mL)</label>
+                                <div class="flex flex-wrap gap-2 mb-3">
+                                    <button onclick="setVal('vol', 10)" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-md text-sm">10</button>
+                                    <button onclick="setVal('vol', 20)" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-md text-sm">20</button>
+                                    <button onclick="setVal('vol', 30)" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-md text-sm">30</button>
+                                    <button onclick="setVal('vol', 40)" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-md text-sm">40</button>
+                                    <button onclick="setVal('vol', 50)" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-md text-sm">50</button>
+                                    <button onclick="setVal('vol', 60)" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-md text-sm">60</button>
+                                </div>
+                                <input type="number" id="volInput" max="60" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-semibold">
+                            </section>
+
+                            <section id="weightSection">
+                                <label class="block text-sm font-bold text-gray-600 mb-2">Cân nặng bệnh nhân (kg)</label>
+                                <div class="flex flex-wrap gap-2 mb-3">
+                                    <button onclick="setVal('weight', 40)" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-md text-sm">40</button>
+                                    <button onclick="setVal('weight', 50)" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-md text-sm">50</button>
+                                    <button onclick="setVal('weight', 60)" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-md text-sm">60</button>
+                                    <button onclick="setVal('weight', 70)" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-md text-sm">70</button>
+                                    <button onclick="setVal('weight', 80)" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-md text-sm">80</button>
+                                </div>
+                                <input type="number" id="weightInput" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-semibold">
+                            </section>
+                        </div>
+
+                        <div class="space-y-10">
+                            <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                                <!-- Standard Dose UI -->
+                                <div id="standardDoseGroup">
+                                    <div class="flex justify-between items-end mb-4">
+                                        <label class="text-sm font-bold text-gray-500">LIỀU TRUYỀN</label>
+                                        <div class="text-right">
+                                            <input type="number" id="doseInput" class="w-24 text-right text-2xl font-black bg-transparent border-b-2 border-blue-500 focus:outline-none">
+                                            <div id="doseUnit" class="text-xs font-bold text-gray-400 mt-1">--</div>
+                                        </div>
+                                    </div>
+                                    <input type="range" id="doseSlider" step="any" class="mb-2">
+                                    <div class="flex justify-between text-[10px] font-bold text-gray-300">
+                                        <span id="doseMin">0</span>
+                                        <span id="doseMax">20</span>
+                                    </div>
+                                </div>
+
+                                <!-- Custom Amiodarone Toggles -->
+                                <div id="amiodaroneGroup" class="hidden">
+                                    <label class="text-sm font-bold text-blue-600 block mb-4">CẤP LIỀU AMIODARONE</label>
+                                    <div class="grid grid-cols-1 gap-3">
+                                        <button onclick="setAmioMode('bolus')" id="btnAmioBolus" class="p-3 rounded-xl border-2 font-bold text-sm text-left transition-colors flex justify-between items-center">
+                                            <span>Bolus (150mg/10mL)</span>
+                                            <span class="text-xs opacity-60">60 mL/h</span>
+                                        </button>
+                                        <button onclick="setAmioMode('1')" id="btnAmio1" class="p-3 rounded-xl border-2 font-bold text-sm text-left transition-colors">
+                                            <span>1 mg/phút</span>
+                                            <span class="block text-xs font-normal mt-1 opacity-80">6 giờ đầu tiên</span>
+                                        </button>
+                                        <button onclick="setAmioMode('0.5')" id="btnAmio05" class="p-3 rounded-xl border-2 font-bold text-sm text-left transition-colors">
+                                            <span>0.5 mg/phút</span>
+                                            <span class="block text-xs font-normal mt-1 opacity-80">18 giờ tiếp theo</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-blue-50 p-6 rounded-2xl border border-blue-100">
+                                <div class="flex justify-between items-end mb-4">
+                                    <label class="text-sm font-bold text-blue-600">TỐC ĐỘ TRUYỀN</label>
+                                    <div class="text-right">
+                                        <input type="number" id="speedInput" class="w-24 text-right text-3xl font-black bg-transparent border-b-2 border-blue-600 text-blue-700 focus:outline-none">
+                                        <span class="text-sm font-bold text-blue-400">mL/h</span>
+                                    </div>
+                                </div>
+                                <div id="speedSliderDiv">
+                                    <input type="range" id="speedSlider" min="0" max="60" step="0.1" class="mb-2">
+                                    <div class="flex justify-between text-[10px] font-bold text-blue-200">
+                                        <span>0 mL/h</span>
+                                        <span>60 mL/h</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-slate-800 p-4 rounded-xl text-white">
+                                    <div class="text-[10px] opacity-60 uppercase mb-1">Thời gian truyền hết</div>
+                                    <div id="timeLeft" class="text-xl font-mono font-bold">--:--</div>
+                                </div>
+                                <div class="bg-slate-800 p-4 rounded-xl text-white">
+                                    <div class="text-[10px] opacity-60 uppercase mb-1">Thời điểm dự kiến hết</div>
+                                    <div id="endTime" class="text-xl font-mono font-bold text-blue-300">--:--</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-amber-50 p-6 border-t border-amber-100">
+                        <div class="flex gap-3">
+                            <span class="text-xl">📝</span>
+                            <p id="drugNote" class="text-sm text-amber-900 leading-relaxed"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const rawDrugs = [
+            { id: 1, name: 'Amiodarone', min: 0.5, max: 1.0, unit: 'mg/phút', type: 'fixed_time_mg', defaultMg: 600, note: '', mgSug: [150, 300, 450, 600] },
+            { id: 2, name: 'Dobutamine', min: 2, max: 20, unit: 'µg/kg/phút', type: 'weight_based', defaultMg: 250, note: 'Thuốc chủ yếu tác dụng tăng sức co bóp cơ tim và giãn mạch nhẹ; thường pha trong NaCl 0.9% hoặc Glucose 5%.' },
+            { id: 3, name: 'Dopamine', min: 2, max: 20, unit: 'µg/kg/phút', type: 'weight_based', defaultMg: 200, note: '1-5 µg/kg/phút (giãn mạch thận); 5-10 µg/kg/phút (tăng co bóp); >10 µg/kg/phút (co mạch).' },
+            { id: 4, name: 'Adrenalin', min: 0.01, max: 1, unit: 'µg/kg/phút', type: 'weight_based', defaultMg: 1, note: 'Sốc phản vệ, ngưng tim, sốc tim kháng trị. Tác dụng co mạch và kích thích tim cực mạnh.' },
+            { id: 5, name: 'Nicardipine', min: 5, max: 15, unit: 'mg/giờ', type: 'hourly', defaultMg: 50, note: 'Khởi đầu 5 mg/giờ; tăng dần 2.5 mg/giờ mỗi 5-15 phút. Tối đa 15 mg/giờ.' },
+            { id: 6, name: 'Nitroglycerin', min: 10, max: 200, unit: 'µg/phút', type: 'fixed_time_mcg', defaultMg: 50, note: 'Giãn tĩnh mạch ưu thế. Khởi đầu 10 µg/phút; tăng mỗi 3-5 phút cho đến khi đạt HA mục tiêu.', mgSug: [10, 20, 30, 40, 50, 60] },
+            { id: 7, name: 'Noradrenalin', min: 0.01, max: 3, unit: 'µg/kg/phút', type: 'weight_based', defaultMg: 4, note: 'Khởi đầu 0.05 - 0.1 µg/kg/phút; điều chỉnh tăng dần theo đáp ứng HA.' }
+        ];
+
+        // Sort alphabetically
+        const drugs = [...rawDrugs].sort((a, b) => a.name.localeCompare(b.name));
+
+        let currentDrug = null;
+        let isInternalUpdate = false;
+        let amioMode = 'bolus';
+
+        const menu = document.getElementById('drugMenu');
+        const calcScreen = document.getElementById('calcScreen');
+        const welcome = document.getElementById('welcomeScreen');
+
+        // Render Menu
+        drugs.forEach(d => {
+            const btn = document.createElement('button');
+            btn.className = "flex-shrink-0 lg:w-full text-left px-4 py-3 rounded-xl transition-all font-semibold text-sm border border-transparent";
+            btn.innerHTML = d.name;
+            btn.onclick = () => {
+                document.querySelectorAll('#drugMenu button').forEach(b => b.classList.remove('bg-blue-600', 'text-white', 'shadow-md'));
+                btn.classList.add('bg-blue-600', 'text-white', 'shadow-md');
+                selectDrug(d);
+            };
+            menu.appendChild(btn);
+        });
+
+        function selectDrug(drug) {
+            currentDrug = drug;
+            welcome.classList.add('hidden');
+            calcScreen.classList.remove('hidden');
+
+            document.getElementById('drugName').innerText = drug.name;
+            document.getElementById('drugSub').innerText = drug.unit;
+            document.getElementById('doseUnit').innerText = drug.unit;
+            document.getElementById('drugNote').innerText = drug.note;
+
+            document.getElementById('mgInput').value = drug.defaultMg;
+            document.getElementById('volInput').value = 50;
+            document.getElementById('weightInput').value = 60; // Default 60kg
+
+            const mgSug = document.getElementById('mgSuggestions');
+            mgSug.innerHTML = '';
+            if (drug.mgSug) {
+                drug.mgSug.forEach(val => {
+                    const b = document.createElement('button');
+                    b.className = "px-3 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-md text-xs font-bold";
+                    b.innerText = val + ' mg';
+                    b.onclick = () => { 
+                        if (currentDrug.name === 'Amiodarone' && amioMode === 'bolus') setAmioMode('1');
+                        document.getElementById('mgInput').value = val; 
+                        calculateFromDose(); 
+                    };
+                    mgSug.appendChild(b);
+                });
+            }
+
+            document.getElementById('weightSection').style.display = drug.type === 'weight_based' ? 'block' : 'none';
+
+            // Reset UI components based on drug
+            if (drug.name === 'Amiodarone') {
+                document.getElementById('standardDoseGroup').classList.add('hidden');
+                document.getElementById('amiodaroneGroup').classList.remove('hidden');
+                document.getElementById('speedSliderDiv').classList.add('hidden');
+                document.getElementById('speedInput').readOnly = true;
+                setAmioMode('bolus');
+            } else {
+                document.getElementById('standardDoseGroup').classList.remove('hidden');
+                document.getElementById('amiodaroneGroup').classList.add('hidden');
+                document.getElementById('speedSliderDiv').classList.remove('hidden');
+                document.getElementById('speedInput').readOnly = false;
+                document.getElementById('mgInput').readOnly = false;
+                document.getElementById('volInput').readOnly = false;
+
+                // Slider limits for normal drugs
+                const doseSlider = document.getElementById('doseSlider');
+                doseSlider.min = drug.min;
+                doseSlider.max = drug.max;
+                doseSlider.step = drug.min < 1 ? 0.01 : 1;
+                doseSlider.value = drug.min;
+
+                document.getElementById('doseMin').innerText = drug.min;
+                document.getElementById('doseMax').innerText = drug.max;
+
+                calculateFromDose();
+            }
+        }
+
+        function setAmioMode(mode) {
+            amioMode = mode;
+            const btnBolus = document.getElementById('btnAmioBolus');
+            const btn1 = document.getElementById('btnAmio1');
+            const btn05 = document.getElementById('btnAmio05');
+
+            [btnBolus, btn1, btn05].forEach(btn => {
+                btn.classList.add('bg-white', 'text-gray-600', 'border-gray-200');
+                btn.classList.remove('bg-blue-600', 'text-white', 'border-blue-600');
+            });
+
+            const activeBtn = mode === 'bolus' ? btnBolus : (mode === '1' ? btn1 : btn05);
+            activeBtn.classList.remove('bg-white', 'text-gray-600', 'border-gray-200');
+            activeBtn.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
+
+            if (mode === 'bolus') {
+                document.getElementById('mgInput').value = 150;
+                document.getElementById('volInput').value = 10;
+                document.getElementById('drugNote').innerText = "Bolus: Amiodarone 150mg/3mL 01A pha Glucose 5% đủ 10mL tốc độ 60 mL/h.";
+                document.getElementById('mgInput').readOnly = true;
+                document.getElementById('volInput').readOnly = true;
+            } else {
+                document.getElementById('mgInput').readOnly = false;
+                document.getElementById('volInput').readOnly = false;
+                
+                // Auto upscale to standard maintenance mix if switching from bolus lock
+                if (document.getElementById('mgInput').value == '150' && document.getElementById('volInput').value == '10') {
+                     document.getElementById('mgInput').value = 600;
+                     document.getElementById('volInput').value = 50;
+                }
+                
+                if (mode === '1') {
+                    document.getElementById('drugNote').innerText = "Liều 1 mg/phút, gợi ý truyền trong 6h tiếp theo.";
+                } else {
+                    document.getElementById('drugNote').innerText = "Liều 0.5 mg/phút, gợi ý truyền trong 18h tiếp sau.";
+                }
+            }
+            calculateFromDose();
+        }
+
+        function setVal(id, val) {
+            if (currentDrug.name === 'Amiodarone' && amioMode === 'bolus' && id === 'vol') {
+                setAmioMode('1');
+            }
+            if(id === 'vol') document.getElementById('volInput').value = val;
+            if(id === 'weight') document.getElementById('weightInput').value = val;
+            calculateFromDose();
+        }
+
+        // Logic 1: Dose changed -> Calculate Speed
+        function calculateFromDose() {
+            if (!currentDrug || isInternalUpdate) return;
+            isInternalUpdate = true;
+
+            const mg = parseFloat(document.getElementById('mgInput').value) || 0;
+            const vol = parseFloat(document.getElementById('volInput').value) || 0;
+            const weight = parseFloat(document.getElementById('weightInput').value) || 1;
+            const dose = parseFloat(document.getElementById('doseInput').value) || 0;
+            const speedInput = document.getElementById('speedInput');
+
+            if (currentDrug.name === 'Amiodarone') {
+                if (amioMode === 'bolus') {
+                    document.getElementById('mgInput').value = 150;
+                    document.getElementById('volInput').value = 10;
+                    speedInput.value = 60;
+                    updateUI(15, 60, 10);
+                } else {
+                    const amioDose = amioMode === '1' ? 1 : 0.5;
+                    let rate = 0;
+                    if (mg > 0 && vol > 0) rate = (amioDose * 60) / (mg / vol);
+                    speedInput.value = rate.toFixed(1);
+                    updateUI(amioDose, rate, vol);
+                }
+                isInternalUpdate = false;
+                return;
+            }
+
+            let rate = 0;
+            const conc = mg / vol; // mg/mL
+
+            if (conc > 0) {
+                switch (currentDrug.type) {
+                    case 'weight_based':
+                        rate = (dose * weight * 60) / (conc * 1000);
+                        break;
+                    case 'fixed_time_mcg':
+                        rate = (dose * 60) / (conc * 1000);
+                        break;
+                    case 'hourly':
+                        rate = dose / conc;
+                        break;
+                }
+            }
+
+            speedInput.value = rate.toFixed(1);
+            document.getElementById('speedSlider').value = rate;
+            updateUI(dose, rate, vol);
+            isInternalUpdate = false;
+        }
+
+        // Logic 2: Speed changed -> Calculate Dose
+        function calculateFromSpeed() {
+            if (!currentDrug || isInternalUpdate) return;
+            if (currentDrug.name === 'Amiodarone') return; // Speed overrides not allowed for Amiodarone toggle logic
+
+            isInternalUpdate = true;
+
+            const mg = parseFloat(document.getElementById('mgInput').value) || 0;
+            const vol = parseFloat(document.getElementById('volInput').value) || 0;
+            const weight = parseFloat(document.getElementById('weightInput').value) || 1;
+            const rate = parseFloat(document.getElementById('speedInput').value) || 0;
+
+            let dose = 0;
+            const conc = mg / vol;
+
+            if (conc > 0) {
+                switch (currentDrug.type) {
+                    case 'weight_based':
+                        dose = (rate * conc * 1000) / (weight * 60);
+                        break;
+                    case 'fixed_time_mcg':
+                        dose = (rate * conc * 1000) / 60;
+                        break;
+                    case 'hourly':
+                        dose = rate * conc;
+                        break;
+                }
+            }
+
+            document.getElementById('doseInput').value = dose.toFixed(currentDrug.min < 1 ? 2 : 1);
+            document.getElementById('doseSlider').value = dose;
+            updateUI(dose, rate, vol);
+            isInternalUpdate = false;
+        }
+
+        function updateUI(dose, rate, vol) {
+            // Colors (skip if Amiodarone)
+            if (currentDrug.name !== 'Amiodarone') {
+                const doseDisplay = document.getElementById('doseInput');
+                const range = currentDrug.max - currentDrug.min;
+                const percent = (dose - currentDrug.min) / range;
+                
+                doseDisplay.classList.remove('dose-low', 'dose-med', 'dose-high');
+                if (percent < 0.33) doseDisplay.classList.add('dose-low');
+                else if (percent < 0.66) doseDisplay.classList.add('dose-med');
+                else doseDisplay.classList.add('dose-high');
+            }
+
+            // Time estimates
+            if (rate > 0) {
+                const totalHours = vol / rate;
+                const h = Math.floor(totalHours);
+                const m = Math.floor((totalHours - h) * 60);
+                document.getElementById('timeLeft').innerText = `${h}h ${m}m`;
+
+                const end = new Date(Date.now() + totalHours * 3600000);
+                document.getElementById('endTime').innerText = end.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            } else {
+                document.getElementById('timeLeft').innerText = '--:--';
+                document.getElementById('endTime').innerText = '--:--';
+            }
+        }
+
+        // Event Listeners for Dose
+        document.getElementById('doseInput').oninput = calculateFromDose;
+        document.getElementById('doseSlider').oninput = function() {
+            document.getElementById('doseInput').value = this.value;
+            calculateFromDose();
+        };
+
+        // Event Listeners for Speed
+        document.getElementById('speedInput').oninput = calculateFromSpeed;
+        document.getElementById('speedSlider').oninput = function() {
+            document.getElementById('speedInput').value = this.value;
+            calculateFromSpeed();
+        };
+
+        // Others
+        ['mgInput', 'volInput', 'weightInput'].forEach(id => {
+            document.getElementById(id).oninput = calculateFromDose;
+        });
+
+    </script>
+</body>
+</html>
